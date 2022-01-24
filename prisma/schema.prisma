@@ -1,0 +1,39 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-arm64-openssl-1.1.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("PRISMA_DATABASE_URL")
+}
+
+enum tiers_mode {
+  GRADUATED
+  VOLUME
+}
+
+model product_costs {
+  id          String     @id(map: "product_costs_pk")
+  merchant_id String
+  tiers_mode  tiers_mode
+  created_at  DateTime   @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime   @default(now()) @db.Timestamptz(6)
+  tiers       Json
+  merchants   merchants  @relation(fields: [merchant_id], references: [id], onDelete: Cascade, map: "product_costs_merchants_id_fk")
+
+  @@index([merchant_id], map: "product_costs_merchant_id_index")
+}
+
+model merchants {
+  id                    String          @id(map: "merchants_pk")
+  name                  String
+  created_at            DateTime        @default(now()) @db.Timestamptz(6)
+  client_id             String          @unique(map: "merchants_client_id_uindex")
+  email                 String?
+  auth0_organization_id String          @unique(map: "merchants_auth0_organization_id_uindex")
+  product_costs         product_costs[]
+}
